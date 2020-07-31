@@ -1,34 +1,36 @@
 import React, { useState } from 'react';
+import { dataCall } from '../../../core/DataService';
+import { ADD_QUESTION_OPTION, DELETE_QUESTION_OPTION } from '../../../core/queries';
 
 
 export default function QuestionEdit(props) {
     const [questionText, setQuestionText] = useState(props.question.text);
-    const [questionType, setQuestionType] = useState(props.question.type);
+    const [questionType, setQuestionType] = useState(props.question.answerType);
     const [questionRequired, setQuestionRequired] = useState(props.question.required);
-    const [questionOptions, setQuestionOptions] = useState(props.question.options);
+    const [questionOptions, setQuestionOptions] = useState(props.question.questionoptionSet);
 
     function saveEdit() {
         props.updateQuestion(questionText, questionType, questionRequired, questionOptions, props.question.id);
     }
 
     function addNewOption() {
-        let order = Math.max.apply(Math, questionOptions.map((o) => o.order)) + 1;
-        let id = Math.max.apply(Math, questionOptions.map((o) => o.id)) + 1;
-
-        setQuestionOptions([
-            ...questionOptions,
-            {
-                "text": "",
-                order: order,
-                id: id
-            }
-        ]);
+        dataCall(ADD_QUESTION_OPTION
+            .replace('$questionId', props.question.id))
+            .then(r => {
+                setQuestionOptions([
+                    ...questionOptions,
+                    r.data.data.createQuestionOption.QuestionOption
+                ]);
+            });
     }
 
     function deleteOption(id) {
         let copiedOptions = [...questionOptions];
 
         let index = copiedOptions.findIndex(o => o.id === id);
+
+        dataCall(DELETE_QUESTION_OPTION
+            .replace('$optionId', copiedOptions[index].id));
 
         copiedOptions.splice(index, 1);
 
